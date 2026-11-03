@@ -359,7 +359,7 @@ static ObjFunction* endCompiler() {
 */
 //> Calls and Functions disassemble-end
     disassembleChunk(currentChunk(), function->name != NULL
-        ? function->name->chars : "<script>");
+        ? function->name->Char : "<script>");
 //< Calls and Functions disassemble-end
   }
 #endif

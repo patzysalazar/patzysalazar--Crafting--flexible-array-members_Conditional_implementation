@@ -105,33 +105,35 @@ ObjNative* newNative(NativeFn function) {
 //< Calls and Functions new-native
 
 /* Strings allocate-string < Hash Tables allocate-string
-static ObjString* allocateString(char* chars, int length) {
+static ObjString* allocateString(char* Char, int length) {
 */
 //> allocate-string
 //> Hash Tables allocate-string
-static ObjString* allocateString(char* chars, int length,
-                                 uint32_t hash) {
+/////////////////////////////////////////////////////////////////////
+//static ObjString* allocateString(char* Char, int length,
+//                                 uint32_t hash) {
 //< Hash Tables allocate-string
-  ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
-  string->length = length;
-  string->chars = chars;
+//  ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+//  string->length = length;
+//  string->Char = chars;
 //> Hash Tables allocate-store-hash
-  string->hash = hash;
+//  string->hash = hash;
 //< Hash Tables allocate-store-hash
 //> Hash Tables allocate-store-string
 //> Garbage Collection push-string
 
-  push(OBJ_VAL(string));
+//  push(OBJ_VAL(string));
 //< Garbage Collection push-string
-  tableSet(&vm.strings, string, NIL_VAL);
+//  tableSet(&vm.strings, string, NIL_VAL);
 //> Garbage Collection pop-string
-  pop();
+//  pop();
 
 //< Garbage Collection pop-string
 //< Hash Tables allocate-store-string
-  return string;
-}
+//  return string;
+//}
 //< allocate-string
+///////////////////////////////////////////////////////////////////////
 //> Hash Tables hash-string
 static uint32_t hashString(const char* key, int length) {
   uint32_t hash = 2166136261u;
@@ -143,43 +145,64 @@ static uint32_t hashString(const char* key, int length) {
 }
 //< Hash Tables hash-string
 //> take-string
-ObjString* takeString(char* chars, int length) {
+ObjString* makeString(int length) {
+// fcn allocates memory and length
+//sizeOf(Objstring) - size of structure
+    size_t sizeBytes = sizeof(ObjString) + length + 1;// how much memory to allocate
+
+// use inside here
+    Obj* objPointer = allocateObject(sizeBytes, OBJ_STRING);// returns obj pointer and allocates memory for new string obj
+    ((ObjString*)objPointer)-> length = length;//converts object pointer to ObjString pointer and stores length
+    return ((ObjString*)objPointer);
+///////////////////////////////////////////////////////////////////////
+//code from before :
 /* Strings take-string < Hash Tables take-string-hash
   return allocateString(chars, length);
 */
 //> Hash Tables take-string-hash
-  uint32_t hash = hashString(chars, length);
+//  uint32_t hash = hashString(chars, length);
 //> take-string-intern
-  ObjString* interned = tableFindString(&vm.strings, chars, length,
-                                        hash);
-  if (interned != NULL) {
-    FREE_ARRAY(char, chars, length + 1);
-    return interned;
-  }
+//  ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
+//  if (interned != NULL) {
+//    FREE_ARRAY(char, chars, length + 1);
+//    return interned;
+//////////////////////////////////////////////////////////////////////
 
 //< take-string-intern
-  return allocateString(chars, length, hash);
+//  return allocateString(chars, length, hash);
 //< Hash Tables take-string-hash
 }
 //< take-string
 ObjString* copyString(const char* chars, int length) {
+
+////////////////////////////////////////////////////////////////////////////////
 //> Hash Tables copy-string-hash
   uint32_t hash = hashString(chars, length);
 //> copy-string-intern
-  ObjString* interned = tableFindString(&vm.strings, chars, length,
-                                        hash);
+  ObjString* interned = tableFindString(&vm.strings, chars, length, hash);
   if (interned != NULL) return interned;
 
+  ObjString* newString = makeString(length);// makes string obj and allocates memory
 //< copy-string-intern
 //< Hash Tables copy-string-hash
-  char* heapChars = ALLOCATE(char, length + 1);
-  memcpy(heapChars, chars, length);
-  heapChars[length] = '\0';
+//  char* heapChars = ALLOCATE(char, length + 1);
+    newString->hash = hash;
+//  memcpy(heapChars, chars, length);
+//memcpy(destination - where we want the characters, source, number of bytes/ length )
+    memcpy(newString->Char, chars, length);
+//  heapChars[length] = '\0';
+    newString->Char[length] = '\0';// null terminator at end of array
+
+
+    push(OBJ_VAL(newString));
+    tableSet(&vm.strings, newString, NIL_VAL);
+    pop();
+    return newString;
 /* Strings object-c < Hash Tables copy-string-allocate
   return allocateString(heapChars, length);
 */
 //> Hash Tables copy-string-allocate
-  return allocateString(heapChars, length, hash);
+//  return allocateString(heapChars, length, hash);
 //< Hash Tables copy-string-allocate
 }
 //> Closures new-upvalue
@@ -203,7 +226,7 @@ static void printFunction(ObjFunction* function) {
     return;
   }
 //< print-script
-  printf("<fn %s>", function->name->chars);
+  printf("<fn %s>", function->name->Char);
 }
 //< Calls and Functions print-function-helper
 //> print-object
@@ -216,7 +239,7 @@ void printObject(Value value) {
 //< Methods and Initializers print-bound-method
 //> Classes and Instances print-class
     case OBJ_CLASS:
-      printf("%s", AS_CLASS(value)->name->chars);
+      printf("%s", AS_CLASS(value)->name->Char);
       break;
 //< Classes and Instances print-class
 //> Closures print-closure
@@ -232,7 +255,7 @@ void printObject(Value value) {
 //> Classes and Instances print-instance
     case OBJ_INSTANCE:
       printf("%s instance",
-             AS_INSTANCE(value)->klass->name->chars);
+             AS_INSTANCE(value)->klass->name->Char);
       break;
 //< Classes and Instances print-instance
 //> Calls and Functions print-native
